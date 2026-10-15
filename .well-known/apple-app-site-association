@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["V86ND4F3SD.com.bradgregory.Stubz"],
+        "components": [
+          { "/": "/show/*", "comment": "Shared Stubz concerts" }
+        ]
+      }
+    ]
+  }
+}
