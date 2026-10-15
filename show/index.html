@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A show shared with Stubz</title>
+<meta name="description" content="A concert keepsake shared from Stubz. Save it to your own Stubz.">
+<meta property="og:title" content="A show shared with Stubz">
+<meta property="og:description" content="Tap to see the ticket and save it to your Stubz.">
+<meta property="og:image" content="../stubz-icon.png">
+<link rel="icon" href="../stubz-icon.png">
+<style>
+  :root { --ink:#1B1B1F; --paper:#FBFAF7; --cream:#E9E2D3; --gold:#F2C14E; --red:#C8102E; --muted:#57534B; }
+  * { box-sizing: border-box; }
+  body { margin:0; min-height:100vh; font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+         color:var(--paper); background:radial-gradient(ellipse at 50% 0%, #4A2E17 0%, #2A1A0E 55%, #160D07 100%);
+         display:flex; justify-content:center; padding:32px 16px 48px; }
+  main { width:100%; max-width:440px; text-align:center; }
+  .brand { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:22px; }
+  .brand img { width:52px; height:52px; border-radius:12px; }
+  .brand b { font-size:30px; font-weight:900; letter-spacing:1px; }
+  .brand small { display:block; font:600 11px ui-monospace, Menlo, monospace; letter-spacing:3px; color:var(--gold); text-align:left; }
+  h1 { font-size:24px; margin:0 0 18px; }
+  .ticket { display:flex; background:var(--paper); color:var(--ink); border-radius:8px; overflow:hidden;
+            text-align:left; box-shadow:0 14px 34px rgba(0,0,0,.45); position:relative; }
+  .ticket::before, .ticket::after { content:""; position:absolute; top:50%; width:18px; height:18px; margin-top:-9px;
+            border-radius:50%; background:#2A1A0E; }
+  .ticket::before { left:-9px; } .ticket::after { right:-9px; }
+  .stub { width:86px; background:#D6D3CD; display:flex; flex-direction:column; align-items:center; justify-content:center;
+          border-right:2px dashed #9C978E; font-family:ui-monospace, Menlo, monospace; padding:14px 0; }
+  .stub .m { font-size:15px; letter-spacing:2px; }
+  .stub .d { font-size:34px; font-weight:800; line-height:1; }
+  .stub .y { font-size:12px; color:var(--muted); margin-top:4px; }
+  .body { padding:16px 16px 16px 14px; flex:1; min-width:0; }
+  .artist { font-size:22px; font-weight:800; margin:0 0 4px; overflow-wrap:anywhere; }
+  .line { font-size:14px; color:var(--muted); margin:2px 0; overflow-wrap:anywhere; }
+  .from { font-size:13px; font-weight:700; color:var(--red); margin-top:8px; }
+  .btn { display:block; width:100%; padding:16px; border-radius:14px; font-size:17px; font-weight:700;
+         text-decoration:none; margin-top:14px; }
+  .primary { background:var(--red); color:#fff; margin-top:26px; }
+  .secondary { background:rgba(251,250,247,.1); color:var(--paper); border:1px solid rgba(251,250,247,.25); }
+  .note { font-size:13px; color:var(--cream); opacity:.85; margin-top:18px; line-height:1.45; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <img src="../stubz-icon.png" alt="">
+    <div><b>STUBZ</b><small>CONCERT KEEPSAKES</small></div>
+  </div>
+
+  <div id="show" class="hidden">
+    <h1 id="title">A friend shared a show</h1>
+    <div class="ticket">
+      <div class="stub"><div class="m" id="mon"></div><div class="d" id="day"></div><div class="y" id="yr"></div></div>
+      <div class="body">
+        <p class="artist" id="artist"></p>
+        <p class="line" id="venue"></p>
+        <p class="line" id="openers"></p>
+        <p class="from" id="from"></p>
+      </div>
+    </div>
+    <a class="btn primary" id="get" href="#">Get Stubz on the App Store</a>
+    <a class="btn secondary" id="open" href="#">Already have Stubz? Open it</a>
+    <p class="note">Stubz is free. After installing, come back and tap <b>Open it</b>, or tap the link in your messages again, to save this show to Friends' Shows.</p>
+  </div>
+
+  <div id="empty" class="hidden">
+    <h1>Your concert keepsakes</h1>
+    <p class="note">Stubz turns every show you've been to into a ticket stub, a poster and the set list.</p>
+    <a class="btn primary" id="get2" href="#">Get Stubz on the App Store</a>
+  </div>
+</main>
+<script>
+  // Your Stubz App Store link (App Store Connect → App Information → Apple ID)
+  const APP_STORE = "https://apps.apple.com/app/id6820333545";
+
+  document.getElementById("get").href = APP_STORE;
+  document.getElementById("get2").href = APP_STORE;
+
+  function decode(payload) {
+    let s = payload.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    const bytes = Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  const payload = location.hash.slice(1);
+  let show = null;
+  try { if (payload) show = decode(payload); } catch (e) { show = null; }
+
+  if (show && show.a) {
+    const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+    const [y, m, d] = (show.d || "").split("-");
+    const from = (show.f || "").trim() || "A friend";
+    const place = [show.v, show.c, show.r].filter(Boolean).join(" · ");
+    const openers = (show.o || []).map(o => o[0]).filter(Boolean);
+
+    document.title = `${show.a} · shared with Stubz`;
+    document.getElementById("title").textContent = `${from} shared a show`;
+    document.getElementById("mon").textContent = months[(+m || 1) - 1] || "";
+    document.getElementById("day").textContent = +d || "";
+    document.getElementById("yr").textContent = y || "";
+    document.getElementById("artist").textContent = show.a;
+    document.getElementById("venue").textContent = place;
+    document.getElementById("openers").textContent = openers.length ? "with " + openers.join(", ") : "";
+    document.getElementById("from").textContent = "From " + from;
+    document.getElementById("open").href = "stubz://show/#" + payload;
+    document.getElementById("show").classList.remove("hidden");
+  } else {
+    document.getElementById("empty").classList.remove("hidden");
+  }
+</script>
+</body>
+</html>
