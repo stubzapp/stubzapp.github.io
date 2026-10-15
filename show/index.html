@@ -7,7 +7,7 @@
 <meta name="description" content="A concert keepsake shared from Stubz. Save it to your own Stubz.">
 <meta property="og:title" content="A show shared with Stubz">
 <meta property="og:description" content="Tap to see the ticket and save it to your Stubz.">
-<meta property="og:image" content="../stubz-icon.png">
+<meta property="og:image" content="https://stubzapp.github.io/stubz-icon.png">
 <link rel="icon" href="../stubz-icon.png">
 <style>
   :root { --ink:#1B1B1F; --paper:#FBFAF7; --cream:#E9E2D3; --gold:#F2C14E; --red:#C8102E; --muted:#57534B; }
@@ -79,16 +79,29 @@
   document.getElementById("get").href = APP_STORE;
   document.getElementById("get2").href = APP_STORE;
 
-  function decode(payload) {
-    let s = payload.replace(/-/g, "+").replace(/_/g, "/");
+  function bytesFrom(b64) {
+    let s = b64.replace(/-/g, "+").replace(/_/g, "/");
     while (s.length % 4) s += "=";
-    const bytes = Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  }
+
+  // Links starting with "1" are squeezed (zlib); older ones are plain
+  async function decode(payload) {
+    let bytes;
+    if (payload.startsWith("1")) {
+      const stream = new Blob([bytesFrom(payload.slice(1))]).stream()
+        .pipeThrough(new DecompressionStream("deflate-raw"));
+      bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+    } else {
+      bytes = bytesFrom(payload);
+    }
     return JSON.parse(new TextDecoder().decode(bytes));
   }
 
+  (async () => {
   const payload = location.hash.slice(1);
   let show = null;
-  try { if (payload) show = decode(payload); } catch (e) { show = null; }
+  try { if (payload) show = await decode(payload); } catch (e) { show = null; }
 
   if (show && show.a) {
     const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -111,6 +124,7 @@
   } else {
     document.getElementById("empty").classList.remove("hidden");
   }
+  })();
 </script>
 </body>
 </html>
